@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Defesa Civil - Sistema de Alertas e Prevenção</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            orange: '#F97316',
+                            blue: '#1E3A8A',
+                            navy: '#0F172A',
+                            darkOrange: '#EA580C',
+                        },
+                        risk: {
+                            green: '#22C55E',
+                            yellow: '#EAB308',
+                            orange: '#F97316',
+                            red: '#EF4444'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .risk-glow-red { box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
+        .risk-glow-orange { box-shadow: 0 0 15px rgba(249, 115, 22, 0.4); }
+        .risk-glow-yellow { box-shadow: 0 0 15px rgba(234, 179, 8, 0.4); }
+        .risk-glow-green { box-shadow: 0 0 15px rgba(34, 197, 94, 0.4); }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans flex flex-col min-h-screen">
+
+    <!-- 1. BARRA DE EMERGÊNCIA E NÍVEL DE RISCO SUPERIOR -->
+    <div id="alertBanner" class="bg-risk-orange text-white px-4 py-2 text-sm font-semibold sticky top-0 z-50 transition-colors duration-300 shadow-md">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center space-x-2">
+                <span class="flex h-3 w-3 relative">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
+                </span>
+                <span id="riskBadgeText" class="uppercase tracking-wider font-extrabold text-xs bg-white text-brand-darkOrange px-2 py-0.5 rounded">
+                    ALERTA LARANJA
+                </span>
+                <span id="riskBannerDesc" class="font-medium text-xs md:text-sm">
+                    Previsão de chuvas intensas e risco de alagamentos isolados nas próximas 12h.
+                </span>
+            </div>
+            
+            <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-end">
+                <div class="flex items-center bg-black/20 rounded-lg p-1 text-xs">
+                    <span class="mr-1 hidden md:inline text-white/80">Alterar Nível:</span>
+                    <button onclick="setRiskLevel('green')" class="px-1.5 py-0.5 rounded text-white hover:bg-white/20 font-bold" title="Nível Verde">V</button>
+                    <button onclick="setRiskLevel('yellow')" class="px-1.5 py-0.5 rounded text-white hover:bg-white/20 font-bold" title="Nível Amarelo">A</button>
+                    <button onclick="setRiskLevel('orange')" class="px-1.5 py-0.5 rounded text-white hover:bg-white/20 font-bold" title="Nível Laranja">L</button>
+                    <button onclick="setRiskLevel('red')" class="px-1.5 py-0.5 rounded text-white hover:bg-white/20 font-bold" title="Nível Vermelho">R</button>
+                </div>
+                
+                <a href="tel:199" class="bg-red-600 hover:bg-red-700 text-white font-bold px-3 py-1 rounded-full flex items-center space-x-1 transition shadow animate-pulse">
+                    <i data-lucide="phone-call" class="w-4 h-4"></i>
+                    <span>EMERGÊNCIA: LIGAR 199</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- CABEÇALHO PRINCIPAL DA NAVEGAÇÃO -->
+    <header class="bg-white border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-brand-orange text-white p-2.5 rounded-xl shadow-md">
+                    <i data-lucide="shield-alert" class="w-8 h-8"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-extrabold text-brand-navy leading-tight">DEFESA CIVIL</h1>
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Proteção e Defesa da População</p>
+                </div>
+            </div>
+
+            <!-- Navegação Desktop -->
+            <nav class="hidden md:flex items-center space-x-6 text-sm font-semibold text-slate-700">
+                <a href="#alertas" class="hover:text-brand-orange transition">Alertas</a>
+                <a href="#abrigos" class="hover:text-brand-orange transition">Abrigos</a>
+                <a href="#guias" class="hover:text-brand-orange transition">Guias de Prevenção</a>
+                <a href="#kit" class="hover:text-brand-orange transition">Kit de Emergência</a>
+                <button onclick="openVistoriaModal()" class="bg-brand-navy hover:bg-slate-800 text-white px-4 py-2 rounded-lg transition shadow-sm flex items-center space-x-2">
+                    <i data-lucide="clipboard-check" class="w-4 h-4"></i>
+                    <span>Solicitar Vistoria</span>
+                </button>
+            </nav>
+
+            <!-- Botão Menu Mobile -->
+            <button onclick="toggleMobileMenu()" class="md:hidden text-slate-700 hover:text-brand-orange p-2">
+                <i data-lucide="menu" class="w-6 h-6"></i>
+            </button>
+        </div>
+
+        <!-- Menu Mobile -->
+        <div id="mobileMenu" class="hidden md:hidden border-t border-slate-200 bg-slate-50 px-4 py-3 space-y-2">
+            <a href="#alertas" onclick="toggleMobileMenu()" class="block py-2 text-slate-700 font-semibold">Alertas</a>
+            <a href="#abrigos" onclick="toggleMobileMenu()" class="block py-2 text-slate-700 font-semibold">Abrigos Próximos</a>
+            <a href="#guias" onclick="toggleMobileMenu()" class="block py-2 text-slate-700 font-semibold">Guias de Prevenção</a>
+            <a href="#kit" onclick="toggleMobileMenu()" class="block py-2 text-slate-700 font-semibold">Kit de Emergência</a>
+            <button onclick="toggleMobileMenu(); openVistoriaModal()" class="w-full text-left bg-brand-navy text-white px-4 py-2 rounded-lg font-semibold mt-2">
+                Solicitar Vistoria Técnica
+            </button>
+        </div>
+    </header>
+
+    <!-- 2. HERO SECTION COM BUSCA POR CEP E SMS 40199 -->
+    <section class="bg-gradient-to-br from-brand-navy to-slate-900 text-white py-12 lg:py-16 px-4">
+        <div class="max-w-7xl mx-auto grid md:grid-cols-2 gap-8 items-center">
+            
+            <!-- Coluna Esquerda: Cadastro de Alertas SMS -->
+            <div class="space-y-6">
+                <div class="inline-flex items-center space-x-2 bg-brand-orange/20 border border-brand-orange/40 px-3 py-1 rounded-full text-brand-orange text-xs font-bold uppercase tracking-wider">
+                    <i data-lucide="bell-ring" class="w-4 h-4"></i>
+                    <span>Cadastro Gratuito de Alertas</span>
+                </div>
+                <h2 class="text-3xl md:text-5xl font-black leading-tight tracking-tight">
+                    Receba avisos de emergência direto no celular
+                </h2>
+                <p class="text-slate-300 text-base md:text-lg">
+                    Cadastre-se para receber alertas meteorológicos e orientações de evacuação da Defesa Civil via SMS ou WhatsApp em tempo real.
+                </p>
+
+                <!-- Box de Ação SMS 40199 -->
+                <div class="bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/20 space-y-3">
+                    <div class="flex items-center space-x-3 text-sm">
+                        <i data-lucide="smartphone" class="w-6 h-6 text-brand-orange"></i>
+                        <span>Envie o número do seu <strong>CEP por SMS para 40199</strong></span>
+                    </div>
+                    <form onsubmit="handleSMSForm(event)" class="flex flex-col sm:flex-row gap-2">
+                        <input type="text" id="smsCepInput" placeholder="Digite seu CEP (ex: 80000-000)" required 
+                               class="px-4 py-3 rounded-lg text-slate-900 bg-white w-full focus:outline-none focus:ring-2 focus:ring-brand-orange">
+                        <button type="submit" class="bg-brand-orange hover:bg-brand-darkOrange text-white font-bold px-6 py-3 rounded-lg transition whitespace-nowrap shadow-lg flex items-center justify-center space-x-2">
+                            <span>Cadastrar CEP</span>
+                            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                        </button>
+                    </form>
+                    <p id="smsSuccessMessage" class="hidden text-emerald-400 text-xs font-medium flex items-center space-x-1">
+                        <i data-lucide="check-circle" class="w-4 h-4"></i>
+                        <span>Solicitação enviada! Você receberá um SMS de confirmação.</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Coluna Direita: Consulta de Risco por CEP -->
+            <div class="bg-white text-slate-800 p-6 md:p-8 rounded-2xl shadow-2xl border border-slate-100 space-y-6">
+                <div>
+                    <h3 class="text-xl font-extrabold text-brand-navy flex items-center space-x-2">
+                        <i data-lucide="search" class="w-5 h-5 text-brand-orange"></i>
+                        <span>Consultar Risco na Sua Região</span>
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-1">Verifique se existe algum alerta de emergência ativo para o seu bairro no momento.</p>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Insira seu CEP ou Bairro</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="searchLocationInput" placeholder="Ex: Centro ou 80010-000" class="flex-1 border border-slate-300 p-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange">
+                            <button onclick="checkLocationRisk()" class="bg-brand-navy hover:bg-slate-800 text-white font-bold px-5 py-3 rounded-lg text-sm transition">
+                                Ver Risco
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Resultado da Consulta -->
+                    <div id="riskResultBox" class="p-4 rounded-xl bg-slate-50 border border-slate-200 transition">
+                        <div class="flex items-start space-x-3">
+                            <div id="riskResultIcon" class="p-2 rounded-lg bg-emerald-100 text-emerald-600">
+                                <i data-lucide="shield-check" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <h4 id="riskResultTitle" class="font-bold text-slate-900 text-sm">Região Sem Alertas Críticos</h4>
+                                <p id="riskResultText" class="text-xs text-slate-600 mt-0.5">Nenhum aviso de desastre ativo no momento para esta localidade. Mantenha a atenção à previsão do tempo.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-100 pt-4 flex items-center justify-between text-xs text-slate-500">
+                    <span class="flex items-center space-x-1"><i data-lucide="clock" class="w-3.5 h-3.5"></i> <span>Atualizado há 5 minutos</span></span>
+                    <span class="font-bold text-brand-orange">Monitoramento 24h</span>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- 3. MONITOR DE ALERTAS E CLIMA INTERATIVO -->
+    <section id="alertas" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="text-center max-w-2xl mx-auto mb-8">
+            <h2 class="text-2xl md:text-3xl font-extrabold text-brand-navy">Monitoramento em Tempo Real</h2>
+            <p class="text-slate-600 text-sm mt-2">Acompanhe as condições meteorológicas e os boletins operacionais de prevenção.</p>
+        </div>
+
+        <!-- Abas do Widget de Clima/Risco -->
+        <div class="bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden">
+            <div class="flex border-b border-slate-200 bg-slate-50 overflow-x-auto">
+                <button onclick="switchWeatherTab('chuvas')" id="tab-chuvas" class="weather-tab flex-1 min-w-[120px] py-3 px-4 text-center text-sm font-bold border-b-2 border-brand-orange text-brand-orange bg-white">
+                    <i data-lucide="cloud-rain" class="w-4 h-4 inline mr-1"></i> Chuvas
+                </button>
+                <button onclick="switchWeatherTab('ventos')" id="tab-ventos" class="weather-tab flex-1 min-w-[120px] py-3 px-4 text-center text-sm font-bold text-slate-600 hover:text-brand-orange">
+                    <i data-lucide="wind" class="w-4 h-4 inline mr-1"></i> Ventos
+                </button>
+                <button onclick="switchWeatherTab('deslizamentos')" id="tab-deslizamentos" class="weather-tab flex-1 min-w-[120px] py-3 px-4 text-center text-sm font-bold text-slate-600 hover:text-brand-orange">
+                    <i data-lucide="mountain-snow" class="w-4 h-4 inline mr-1"></i> Deslizamentos
+                </button>
+                <button onclick="switchWeatherTab('queimadas')" id="tab-queimadas" class="weather-tab flex-1 min-w-[120px] py-3 px-4 text-center text-sm font-bold text-slate-600 hover:text-brand-orange">
+                    <i data-lucide="flame" class="w-4 h-4 inline mr-1"></i> Queimadas
+                </button>
+            </div>
+
+            <div class="p-6">
+                <!-- Conteúdo Chuvas -->
+                <div id="content-chuvas" class="weather-content space-y-4">
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div class="p-4 rounded-xl bg-orange-50 border border-orange-200">
+                            <span class="text-xs font-extrabold uppercase text-orange-600">Acumulado Previsto</span>
+                            <div class="text-2xl font-black text-slate-900 mt-1">45 mm / 24h</div>
+                            <p class="text-xs text-slate-600 mt-1">Chuvas moderadas a fortes no setor norte.</p>
+                        </div>
+                        <div class="p-4 rounded-xl bg-amber-50 border border-amber-200">
+                            <span class="text-xs font-extrabold uppercase text-amber-600">Nível do Rio Principal</span>
+                            <div class="text-2xl font-black text-slate-900 mt-1">2.8 metros</div>
+                            <p class="text-xs text-slate-600 mt-1">Estado de atenção (Cota de transbordo: 3.5m).</p>
+                        </div>
+                        <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200">
+                            <span class="text-xs font-extrabold uppercase text-emerald-600">Drenagem Urbana</span>
+                            <div class="text-2xl font-black text-slate-900 mt-1">Normal</div>
+                            <p class="text-xs text-slate-600 mt-1">Equipes de limpeza em prontidão nos pontos críticos.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Conteúdo Ventos -->
+                <div id="content-ventos" class="weather-content hidden space-y-4">
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div class="p-4 rounded-xl bg-blue-50 border border-blue-200">
+                            <span class="text-xs font-extrabold uppercase text-blue-600">Velocidade do Vento</span>
+                            <div class="text-2xl font-black text-slate-900 mt-1">38 km/h</div>
+                            <p class="text-xs text-slate-600 mt-1">Rajadas moderadas registradas nas áreas costeiras.</p>
+                        </div>
+                        <div class="p-4 rounded-xl bg-slate-100 border border-slate-200">
+                            <span class="text-xs font-extrabold uppercase text-slate-600">Rajadas Máximas</span>
+                            <div class="text-2xl font-black text-slate-900 mt-1">55 km/h</div>
+                            <p class="text-xs text-slate-600 mt-1">Atenção para queda de galhos e fiação.</p>
+                        </div>
+                        <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200">
+                            <span class="text-xs font-extrabold uppercase text-emerald-600">Rede Elétrica</span>
+                            <div class="text-2xl font-black text-slate-900 mt-1">Estável</div>
+                            <p class="text-xs text-slate-600 mt-1">Sem interrupções graves notificadas.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Conteúdo Deslizamentos -->
+                <div id="content-deslizamentos" class="weather-content hidden space-y-4">
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div class="p-4 rounded-xl bg-orange-50 border border-orange-200">
+                            <span class="text-xs font-extrabold uppercase text-orange-600">Saturação do Solo</span>
+                            <div class="text-2xl font-black text-slate-900 mt-1">72%</div>
+                            <p class="text-xs text-slate-600 mt-1">Solo encharcado nas encostas do Morro Sul.</p>
+                        </div>
+                        <div class="p-4 rounded-xl bg-red-50 border border-red-200">
+                            <span class="text-xs font-extrabold uppercase text-red-600">Áreas sob Monitoramento</span>
+                            <div class="text-2xl font-black text-slate-900 mt-1">12 Locais</div>
+                            <p class="text-xs text-slate-600 mt-1">Agentes de campo vistoriando trincas e rachaduras.</p>
+                        </div>
+                        <div class="p-4 rounded-xl bg-amber-50 border border-amber-200">
+                            <span class="text-xs font-extrabold uppercase text-amber-600">Sirenes de Alerta</span>
+                            <div class="text-2xl font-black text-slate-900 mt-1">Prontidão</div>
+                            <p class="text-xs text-slate-600 mt-1">Sistema pronto para acionamento se necessário.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Conteúdo Queimadas -->
+                <div id="content-queimadas" class="weather-content hidden space-y-4">
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200">
+                            <span class="text-xs font-extrabold uppercase text-emerald-600">Umidade Relativa</span>
+                            <div class="text-2xl font-black text-slate-900 mt-1">68%</div>
+                            <p class="text-xs text-slate-600 mt-1">Umidade em níveis adequados para a época.</p>
+                        </div>
+                        <div class="p-4 rounded-xl bg-slate-100 border border-slate-200">
+                            <span class="text-xs font-extrabold uppercase text-slate-600">Focos de Incêndio</span>
+                            <div class="text-2xl font-black text-slate-900 mt-1">0 Ativos</div>
+                            <p class="text-xs text-slate-600 mt-1">Nenhum foco detectado via satélite nas últimas 6h.</p>
+                        </div>
+                        <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200">
+                            <span class="text-xs font-extrabold uppercase text-emerald-600">Risco de Queimada</span>
+                            <div class="text-2xl font-black text-slate-900 mt-1">Baixo</div>
+                            <p class="text-xs text-slate-600 mt-1">Condições desfavoráveis para propagação de fogo.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. BUSCADOR DE ABRIGOS TEMPORÁRIOS -->
+    <section id="abrigos" class="bg-slate-100 py-12 px-4 border-y border-slate-200">
+        <div class="max-w-7xl mx-auto space-y-8">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                    <span class="text-xs font-bold text-brand-orange uppercase tracking-wider">Acolhimento e Segurança</span>
+                    <h2 class="text-2xl md:text-3xl font-extrabold text-brand-navy mt-1">Localizador de Abrigos de Emergência</h2>
+                    <p class="text-slate-600 text-sm">Encontre o ponto de apoio ou abrigo público mais próximo da sua residência.</p>
+                </div>
+                <div class="w-full md:w-72">
+                    <input type="text" id="shelterSearch" onkeyup="filterShelters()" placeholder="Filtrar por bairro..." class="w-full p-2.5 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-orange">
+                </div>
+            </div>
+
+            <!-- Grid de Abrigos -->
+            <div class="grid md:grid-cols-3 gap-6" id="sheltersGrid">
+                <!-- Abrigo 1 -->
+                <div class="shelter-card bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition" data-bairro="centro">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2 py-1 rounded">ABERTO / ATIVO</span>
+                        <span class="text-xs text-slate-500 font-semibold">Capacidade: 120 pessoas</span>
+                    </div>
+                    <h3 class="font-bold text-slate-900 text-base">Escola Municipal Paulo Freire</h3>
+                    <p class="text-xs text-slate-600 mt-1 flex items-center space-x-1">
+                        <i data-lucide="map-pin" class="w-3.5 h-3.5 text-brand-orange"></i>
+                        <span>Rua das Flores, 450 - Centro</span>
+                    </p>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <span class="text-slate-500">Estrutura: Leitos, Refeição, Kit Higiene</span>
+                        <a href="https://maps.google.com" target="_blank" class="font-bold text-brand-orange hover:underline flex items-center space-x-0.5">
+                            <span>Rotas</span> <i data-lucide="external-link" class="w-3 h-3"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Abrigo 2 -->
+                <div class="shelter-card bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition" data-bairro="norte sao pedro">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2 py-1 rounded">ABERTO / ATIVO</span>
+                        <span class="text-xs text-slate-500 font-semibold">Capacidade: 80 pessoas</span>
+                    </div>
+                    <h3 class="font-bold text-slate-900 text-base">Ginásio Esportivo São Pedro</h3>
+                    <p class="text-xs text-slate-600 mt-1 flex items-center space-x-1">
+                        <i data-lucide="map-pin" class="w-3.5 h-3.5 text-brand-orange"></i>
+                        <span>Av. Brasil, 1200 - Bairro Norte</span>
+                    </p>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <span class="text-slate-500">Estrutura: Pet Friendly, Leitos</span>
+                        <a href="https://maps.google.com" target="_blank" class="font-bold text-brand-orange hover:underline flex items-center space-x-0.5">
+                            <span>Rotas</span> <i data-lucide="external-link" class="w-3 h-3"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Abrigo 3 -->
+                <div class="shelter-card bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition" data-bairro="sul esperanca">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="bg-amber-100 text-amber-800 text-xs font-bold px-2 py-1 rounded">SOB SOBREAVISO</span>
+                        <span class="text-xs text-slate-500 font-semibold">Capacidade: 150 pessoas</span>
+                    </div>
+                    <h3 class="font-bold text-slate-900 text-base">Centro Comunitário Esperança</h3>
+                    <p class="text-xs text-slate-600 mt-1 flex items-center space-x-1">
+                        <i data-lucide="map-pin" class="w-3.5 h-3.5 text-brand-orange"></i>
+                        <span>Rua do Sol, 89 - Bairro Sul</span>
+                    </p>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <span class="text-slate-500">Pronto para abertura imediata</span>
+                        <a href="https://maps.google.com" target="_blank" class="font-bold text-brand-orange hover:underline flex items-center space-x-0.5">
+                            <span>Rotas</span> <i data-lucide="external-link" class="w-3 h-3"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. GUIA "O QUE FAZER ANTES, DURANTE E DEPOIS" (TABBED ACCORDION) -->
+    <section id="guias" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="text-center max-w-2xl mx-auto mb-10">
+            <h2 class="text-2xl md:text-3xl font-extrabold text-brand-navy">Guias Orientativos de Prevenção</h2>
+            <p class="text-slate-600 text-sm mt-2">Saiba como agir corretamente para proteger sua vida e sua família em situações de risco.</p>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+            <!-- Seleção de Tipo de Risco -->
+            <div class="flex flex-wrap gap-2 mb-6 border-b border-slate-200 pb-4">
+                <button onclick="switchGuide('alagamentos')" id="guideTab-alagamentos" class="guide-tab border-2 border-brand-orange bg-brand-orange/10 text-brand-orange font-bold px-4 py-2 rounded-xl text-sm flex items-center space-x-2">
+                    <i data-lucide="waves" class="w-4 h-4"></i>
+                    <span>Alagamentos</span>
+                </button>
+                <button onclick="switchGuide('deslizamentos')" id="guideTab-deslizamentos" class="guide-tab border-2 border-transparent hover:bg-slate-100 text-slate-600 font-bold px-4 py-2 rounded-xl text-sm flex items-center space-x-2">
+                    <i data-lucide="mountain" class="w-4 h-4"></i>
+                    <span>Deslizamentos</span>
+                </button>
+                <button onclick="switchGuide('vendavais')" id="guideTab-vendavais" class="guide-tab border-2 border-transparent hover:bg-slate-100 text-slate-600 font-bold px-4 py-2 rounded-xl text-sm flex items-center space-x-2">
+                    <i data-lucide="wind" class="w-4 h-4"></i>
+                    <span>Vendavais</span>
+                </button>
+                <button onclick="switchGuide('incendios')" id="guideTab-incendios" class="guide-tab border-2 border-transparent hover:bg-slate-100 text-slate-600 font-bold px-4 py-2 rounded-xl text-sm flex items-center space-x-2">
+                    <i data-lucide="flame" class="w-4 h-4"></i>
+                    <span>Incêndios</span>
+                </button>
+            </div>
+
+            <!-- Conteúdo das Fases (Antes, Durante, Depois) -->
+            <div id="guideContent" class="grid md:grid-cols-3 gap-6">
+                <!-- Preenchido via JavaScript dinamicamente -->
+            </div>
+        </div>
+    </section>
+
+    <!-- 6. GERADOR INTERATIVO DE KIT DE EMERGÊNCIA -->
+    <section id="kit" class="bg-slate-900 text-white py-12 px-4">
+        <div class="max-w-7xl mx-auto grid md:grid-cols-2 gap-8 items-center">
+            <div>
+                <span class="text-xs font-bold text-brand-orange uppercase tracking-wider">Preparação Pessoal</span>
+                <h2 class="text-2xl md:text-4xl font-extrabold mt-1">Monte seu Kit de Emergência de 72 Horas</h2>
+                <p class="text-slate-300 text-sm mt-3 leading-relaxed">
+                    Em situações de evacuação rápida, ter uma mochila de emergência pronta salva vidas. Marque os itens que você já possui e gere seu relatório de prontidão.
+                </p>
+
+                <!-- Barra de Progresso do Kit -->
+                <div class="mt-6 space-y-2">
+                    <div class="flex justify-between text-xs font-bold">
+                        <span>Prontidão da Mochila</span>
+                        <span id="kitPercent">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-800 h-3 rounded-full overflow-hidden border border-slate-700">
+                        <div id="kitProgressBar" class="bg-brand-orange h-full w-0% transition-all duration-300"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista de Checklist -->
+            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 space-y-3">
+                <h3 class="font-bold text-sm uppercase text-slate-400 mb-2">Itens Essenciais para Check</h3>
+                
+                <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-slate-700/50 rounded-lg transition">
+                    <input type="checkbox" onchange="updateKitProgress()" class="kit-checkbox w-5 h-5 rounded accent-brand-orange">
+                    <span class="text-sm">Água potável (pelo menos 2L por pessoa/dia)</span>
+                </label>
+
+                <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-slate-700/50 rounded-lg transition">
+                    <input type="checkbox" onchange="updateKitProgress()" class="kit-checkbox w-5 h-5 rounded accent-brand-orange">
+                    <span class="text-sm">Alimentos não perecíveis e de fácil abertura</span>
+                </label>
+
+                <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-slate-700/50 rounded-lg transition">
+                    <input type="checkbox" onchange="updateKitProgress()" class="kit-checkbox w-5 h-5 rounded accent-brand-orange">
+                    <span class="text-sm">Lanternas com pilhas sobressalentes</span>
+                </label>
+
+                <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-slate-700/50 rounded-lg transition">
+                    <input type="checkbox" onchange="updateKitProgress()" class="kit-checkbox w-5 h-5 rounded accent-brand-orange">
+                    <span class="text-sm">Kit de primeiros socorros e remédios contínuos</span>
+                </label>
+
+                <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-slate-700/50 rounded-lg transition">
+                    <input type="checkbox" onchange="updateKitProgress()" class="kit-checkbox w-5 h-5 rounded accent-brand-orange">
+                    <span class="text-sm">Cópia de documentos importantes em saco plástico impermeável</span>
+                </label>
+
+                <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-slate-700/50 rounded-lg transition">
+                    <input type="checkbox" onchange="updateKitProgress()" class="kit-checkbox w-5 h-5 rounded accent-brand-orange">
+                    <span class="text-sm">Carregador portátil (Powerbank) para celular</span>
+                </label>
+            </div>
+        </div>
+    </section>
+
+    <!-- RODAPÉ INSTITUCIONAL -->
+    <footer class="bg-slate-950 text-slate-400 text-xs mt-auto border-t border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 py-8 grid md:grid-cols-4 gap-8">
+            <div class="space-y-3">
+                <div class="flex items-center space-x-2 text-white font-bold text-base">
+                    <i data-lucide="shield-alert" class="w-5 h-5 text-brand-orange"></i>
+                    <span>Defesa Civil Municipal</span>
+                </div>
+                <p>Atuação preventiva, preparatória e de resposta a emergências para a garantia da segurança comunitária.</p>
+            </div>
+
+            <div>
+                <h4 class="text-white font-bold mb-3 uppercase tracking-wider text-xs">Telefones Úteis</h4>
+                <ul class="space-y-1.5">
+                    <li><strong class="text-white">199:</strong> Defesa Civil</li>
+                    <li><strong class="text-white">193:</strong> Corpo de Bombeiros</li>
+                    <li><strong class="text-white">190:</strong> Polícia Militar</li>
+                    <li><strong class="text-white">192:</strong> SAMU</li>
+                </ul>
+            </div>
+
+            <div>
+                <h4 class="text-white font-bold mb-3 uppercase tracking-wider text-xs">Serviços Rápidos</h4>
+                <ul class="space-y-1.5">
+                    <li><a href="#alertas" class="hover:text-white transition">Boletins Meteorológicos</a></li>
+                    <li><a href="#abrigos" class="hover:text-white transition">Mapeamento de Abrigos</a></li>
+                    <li><button onclick="openVistoriaModal()" class="hover:text-white text-left transition">Agendamento de Vistorias</button></li>
+                </ul>
+            </div>
+
+            <div>
+                <h4 class="text-white font-bold mb-3 uppercase tracking-wider text-xs">Acessibilidade & Transparência</h4>
+                <p class="mb-2">Portal desenvolvido em conformidade com as diretrizes de acessibilidade digital e transparência pública.</p>
+                <div class="flex space-x-2">
+                    <span class="bg-slate-800 px-2 py-1 rounded text-slate-300 font-mono">WCAG 2.1 AA</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="border-t border-slate-800/60 py-4 text-center">
+            <p>© 2026 Defesa Civil. Todos os direitos reservados. Em caso de emergência, ligue 199.</p>
+        </div>
+    </footer>
+
+    <!-- MODAL DE SOLICITAÇÃO DE VISTORIA TÉCNICA -->
+    <div id="vistoriaModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 relative">
+            <button onclick="closeVistoriaModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <div class="flex items-center space-x-2 text-brand-navy">
+                <i data-lucide="clipboard-check" class="w-6 h-6 text-brand-orange"></i>
+                <h3 class="text-lg font-bold">Solicitar Vistoria Técnica</h3>
+            </div>
+            
+            <p class="text-xs text-slate-600">
+                Utilize este formulário para solicitar avaliação de riscos estruturais em imóveis, encostas ou árvores com risco de queda.
+            </p>
+
+            <form onsubmit="handleVistoriaSubmit(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Nome Completo</label>
+                    <input type="text" required placeholder="Seu nome" class="w-full border border-slate-300 p-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Telefone / WhatsApp</label>
+                    <input type="tel" required placeholder="(00) 00000-0000" class="w-full border border-slate-300 p-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Endereço da Vistoria</label>
+                    <input type="text" required placeholder="Rua, número e bairro" class="w-full border border-slate-300 p-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Tipo de Ocorrência</label>
+                    <select required class="w-full border border-slate-300 p-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange">
+                        <option value="">Selecione o problema...</option>
+                        <option value="rachadura">Rachaduras / Trincas em Paredes</option>
+                        <option value="encosta">Deslizamento / Movimentação de Terra</option>
+                        <option value="arvore">Risco de Queda de Árvore</option>
+                        <option value="inundacao">Alagamento recorrente</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="w-full bg-brand-orange hover:bg-brand-darkOrange text-white font-bold py-3 rounded-lg text-sm transition shadow">
+                    Enviar Solicitação
+                </button>
+            </form>
+
+            <div id="vistoriaSuccessAlert" class="hidden p-3 bg-emerald-100 text-emerald-800 rounded-lg text-xs font-bold text-center">
+                Solicitação registrada com sucesso! Protocolo #DC-2026-884
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT E LÓGICA INTERATIVA -->
+    <script>
+        // Inicializar Lucide Icons
+        lucide.createIcons();
+
+        // Dados dos Guias Preventivos
+        const guidesData = {
+            alagamentos: {
+                antes: ["Limpe calhas e bueiros próximos à sua casa.", "Mantenha documentos em sacos plásticos herméticos.", "Conheça o histórico de alagamentos da sua rua."],
+                durante: ["Não atravesse vias alagadas a pé ou de carro.", "Desligue a chave geral de energia elétrica.", "Suba com a família e itens essenciais para locais altos."],
+                depois: ["Evite contato direto com a água do alagamento (risco de leptospirose).", "Desinfete móveis e paredes com água sanitária.", "Aguarde vistoria antes de religar a energia."]
+            },
+            deslizamentos: {
+                antes: ["Não jogue lixo nem entulho nas encostas.", "Plantas de raízes profundas ajudam na fixação do solo.", "Observe trincas no solo ou nas paredes."],
+                durante: ["Ao ouvir estalos no morro, saia imediatamente de casa.", "Avise vizinhos sobre o perigo iminente.", "Ligue para a Defesa Civil (199) ou Bombeiros (193)."],
+                depois: ["Não retorne à residência até a liberação técnica.", "Acompanhe os boletins operacionais oficiais.", "Procure o abrigo público indicado."]
+            },
+            vendavais: {
+                antes: ["Faça a manutenção de telhados e calhas.", "Corte galhos secos próximos a redes elétricas.", "Guarde objetos soltos nos quintais."],
+                durante: ["Feche bem portas, janelas e persianas.", "Fique longe de janelas de vidro e árvores grandes.", "Não se abrigue debaixo de estruturas frágeis ou outdoors."],
+                depois: ["Cuidado com cabos elétricos partidos na rua.", "Avalie a estrutura da sua casa antes de permanecer nela.", "Evite usar velas caso haja vazamento de gás."]
+            },
+            incendios: {
+                antes: ["Não queime lixo nem vegetação seca.", "Mantenha lotes limpos sem mato alto.", "Descarte bitucas de cigarro adequadamente."],
+                durante: ["Abandone a área na direção oposta ao vento.", "Cubra nariz e boca com pano úmido contra a fumaça.", "Acione imediatamente o Corpo de Bombeiros (193)."],
+                depois: ["Não retorne até a área estar totalmente resfriada.", "Procure atendimento médico se inalou muita fumaça.", "Ajude na identificação de novos focos."]
+            }
+        };
+
+        // Função para alterar nível de risco global
+        function setRiskLevel(level) {
+            const banner = document.getElementById('alertBanner');
+            const badge = document.getElementById('riskBadgeText');
+            const desc = document.getElementById('riskBannerDesc');
+
+            banner.className = 'text-white px-4 py-2 text-sm font-semibold sticky top-0 z-50 transition-colors duration-300 shadow-md ';
+
+            if (level === 'green') {
+                banner.classList.add('bg-risk-green');
+                badge.innerText = 'NÍVEL VERDE';
+                badge.className = 'uppercase tracking-wider font-extrabold text-xs bg-white text-emerald-700 px-2 py-0.5 rounded';
+                desc.innerText = 'Condições normais. Sem alertas de desastres vigentes.';
+            } else if (level === 'yellow') {
+                banner.classList.add('bg-risk-yellow');
+                badge.innerText = 'ALERTA AMARELO';
+                badge.className = 'uppercase tracking-wider font-extrabold text-xs bg-black text-amber-500 px-2 py-0.5 rounded';
+                desc.innerText = 'Atenção: Previsão de ventos fortes e pancadas isoladas de chuva.';
+            } else if (level === 'orange') {
+                banner.classList.add('bg-risk-orange');
+                badge.innerText = 'ALERTA LARANJA';
+                badge.className = 'uppercase tracking-wider font-extrabold text-xs bg-white text-brand-darkOrange px-2 py-0.5 rounded';
+                desc.innerText = 'Previsão de chuvas intensas e risco de alagamentos isolados nas próximas 12h.';
+            } else if (level === 'red') {
+                banner.classList.add('bg-risk-red', 'animate-pulse');
+                badge.innerText = 'ALERTA VERMELHO';
+                badge.className = 'uppercase tracking-wider font-extrabold text-xs bg-white text-red-700 px-2 py-0.5 rounded';
+                desc.innerText = 'EMERGÊNCIA EXTREMA: Risco alto de deslizamentos e inundações severas. Evacue áreas de risco!';
+            }
+        }
+
+        // Função para simular checagem de CEP
+        function checkLocationRisk() {
+            const val = document.getElementById('searchLocationInput').value.trim().toLowerCase();
+            const box = document.getElementById('riskResultBox');
+            const title = document.getElementById('riskResultTitle');
+            const text = document.getElementById('riskResultText');
+            const icon = document.getElementById('riskResultIcon');
+
+            if (!val) {
+                alert('Por favor, digite um bairro ou CEP.');
+                return;
+            }
+
+            if (val.includes('norte') || val.includes('morro') || val.includes('800')) {
+                box.className = "p-4 rounded-xl bg-orange-50 border border-orange-200 transition";
+                icon.className = "p-2 rounded-lg bg-orange-100 text-orange-600";
+                icon.innerHTML = '<i data-lucide="alert-triangle" class="w-6 h-6"></i>';
+                title.innerText = "Alerta Moderado para a Sua Região";
+                text.innerText = "Saturação do solo elevada. Moradores em áreas de encosta devem ficar atentos a sinais de deslizamento.";
+            } else {
+                box.className = "p-4 rounded-xl bg-emerald-50 border border-emerald-200 transition";
+                icon.className = "p-2 rounded-lg bg-emerald-100 text-emerald-600";
+                icon.innerHTML = '<i data-lucide="shield-check" class="w-6 h-6"></i>';
+                title.innerText = "Situação Normal na Região";
+                text.innerText = "Nenhum aviso de emergência diretamente ativo para esta localidade no momento.";
+            }
+            lucide.createIcons();
+        }
+
+        // Alternar abas do Clima
+        function switchWeatherTab(tab) {
+            document.querySelectorAll('.weather-tab').forEach(b => {
+                b.classList.remove('border-b-2', 'border-brand-orange', 'text-brand-orange', 'bg-white');
+                b.classList.add('text-slate-600');
+            });
+            document.querySelectorAll('.weather-content').forEach(c => c.classList.add('hidden'));
+
+            const currentTab = document.getElementById(`tab-${tab}`);
+            currentTab.classList.add('border-b-2', 'border-brand-orange', 'text-brand-orange', 'bg-white');
+            currentTab.classList.remove('text-slate-600');
+
+            document.getElementById(`content-${tab}`).classList.remove('hidden');
+        }
+
+        // Alternar Guias Preventivos
+        function switchGuide(type) {
+            document.querySelectorAll('.guide-tab').forEach(b => {
+                b.className = "guide-tab border-2 border-transparent hover:bg-slate-100 text-slate-600 font-bold px-4 py-2 rounded-xl text-sm flex items-center space-x-2";
+            });
+
+            const activeBtn = document.getElementById(`guideTab-${type}`);
+            activeBtn.className = "guide-tab border-2 border-brand-orange bg-brand-orange/10 text-brand-orange font-bold px-4 py-2 rounded-xl text-sm flex items-center space-x-2";
+
+            const guide = guidesData[type];
+            const container = document.getElementById('guideContent');
+
+            container.innerHTML = `
+                <div class="bg-blue-50 border border-blue-100 p-4 rounded-xl space-y-2">
+                    <div class="flex items-center space-x-2 text-blue-800 font-extrabold text-sm uppercase">
+                        <i data-lucide="shield" class="w-4 h-4"></i>
+                        <span>Antes (Prevenção)</span>
+                    </div>
+                    <ul class="text-xs text-slate-700 space-y-2 list-disc list-inside">
+                        ${guide.antes.map(item => `<li>${item}</li>`).join('')}
+                    </ul>
+                </div>
+
+                <div class="bg-amber-50 border border-amber-100 p-4 rounded-xl space-y-2">
+                    <div class="flex items-center space-x-2 text-amber-800 font-extrabold text-sm uppercase">
+                        <i data-lucide="alert-circle" class="w-4 h-4"></i>
+                        <span>Durante (Ação Imediata)</span>
+                    </div>
+                    <ul class="text-xs text-slate-700 space-y-2 list-disc list-inside">
+                        ${guide.durante.map(item => `<li>${item}</li>`).join('')}
+                    </ul>
+                </div>
+
+                <div class="bg-emerald-50 border border-emerald-100 p-4 rounded-xl space-y-2">
+                    <div class="flex items-center space-x-2 text-emerald-800 font-extrabold text-sm uppercase">
+                        <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                        <span>Depois (Recuperação)</span>
+                    </div>
+                    <ul class="text-xs text-slate-700 space-y-2 list-disc list-inside">
+                        ${guide.depois.map(item => `<li>${item}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        // Filtro da lista de abrigos
+        function filterShelters() {
+            const query = document.getElementById('shelterSearch').value.toLowerCase();
+            const cards = document.querySelectorAll('.shelter-card');
+
+            cards.forEach(card => {
+                const bairro = card.getAttribute('data-bairro');
+                if (bairro.includes(query)) {
+                    card.classList.remove('hidden');
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+        }
+
+        // Atualização da Progresso da Mochila de Emergência
+        function updateKitProgress() {
+            const checkboxes = document.querySelectorAll('.kit-checkbox');
+            const checked = document.querySelectorAll('.kit-checkbox:checked');
+            const percent = Math.round((checked.length / checkboxes.length) * 100);
+
+            const bar = document.getElementById('kitProgressBar');
+            const text = document.getElementById('kitPercent');
+
+            bar.style.width = `${percent}%`;
+            text.innerText = `${percent}%`;
+        }
+
+        // Formulário de Cadastro de SMS
+        function handleSMSForm(e) {
+            e.preventDefault();
+            const msg = document.getElementById('smsSuccessMessage');
+            msg.classList.remove('hidden');
+            document.getElementById('smsCepInput').value = '';
+            setTimeout(() => msg.classList.add('hidden'), 5000);
+        }
+
+        // Modais e Menu Mobile
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            menu.classList.toggle('hidden');
+        }
+
+        function openVistoriaModal() {
+            document.getElementById('vistoriaModal').classList.remove('hidden');
+        }
+
+        function closeVistoriaModal() {
+            document.getElementById('vistoriaModal').classList.add('hidden');
+            document.getElementById('vistoriaSuccessAlert').classList.add('hidden');
+        }
+
+        function handleVistoriaSubmit(e) {
+            e.preventDefault();
+            document.getElementById('vistoriaSuccessAlert').classList.remove('hidden');
+            setTimeout(() => {
+                closeVistoriaModal();
+            }, 3000);
+        }
+
+        // Carregar guia inicial no carregamento da página
+        window.onload = function() {
+            switchGuide('alagamentos');
+        };
+    </script>
+</body>
+</html>
